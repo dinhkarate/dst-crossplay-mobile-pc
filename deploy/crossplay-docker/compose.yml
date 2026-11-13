@@ -1,0 +1,212 @@
+# DST crossplay: one Don't Starve Together dedicated server (surface + caves) that phones
+# can join from the mobile Online list. Everything is configured in .env; see README.md.
+#
+#   server        the Master shard (surface) of the patched PC dedicated server
+#   caves         the Caves shard, same image and world volume (profile: caves)
+#   bridge        translates the mobile <-> PC wire dialect and answers the list ping
+#   bridge-caves  the same for the Caves shard; unlisted (profile: caves)
+#   relay         EOS P2P <-> UDP: phones reach the bridge through Epic's network
+#   announcer     writes the row on Klei's Mobile lobby list, pointing at the relay
+#
+# All of them use host networking: EOS P2P and RakNet need real UDP sockets.
+name: dst-crossplay
+
+x-shard: &shard
+  build:
+    context: .
+    dockerfile: server/Dockerfile
+  image: dst-crossplay-server
+  platform: linux/amd64
+  network_mode: host
+  restart: unless-stopped
+  stdin_open: true
+  tty: true
+  volumes:
+    - ${DST_SERVER_DIR:-./vendor/dst-server}:/dst:ro
+    - ./vendor:/vendor:ro
+    - dst-data:/data
+
+x-shard-env: &shard-env
+  CLUSTER_NAME: ${CLUSTER_NAME:-Crossplay}
+  SERVER_NAME: ${SERVER_NAME:-DST Crossplay}
+  SERVER_DESCRIPTION: ${SERVER_DESCRIPTION:-}
+  SERVER_PASSWORD: ${SERVER_PASSWORD:-}
+  SERVER_PORT: ${SERVER_PORT:-11011}
+  CAVES_PORT: ${CAVES_PORT:-11013}
+  SHARD_PORT: ${SHARD_PORT:-10888}
+  MASTER_STEAM_PORT: ${MASTER_STEAM_PORT:-27016}
+  MASTER_AUTH_PORT: ${MASTER_AUTH_PORT:-8766}
+  CAVES_STEAM_PORT: ${CAVES_STEAM_PORT:-27017}
+  CAVES_AUTH_PORT: ${CAVES_AUTH_PORT:-8767}
+  MAX_PLAYERS: ${MAX_PLAYERS:-6}
+  GAME_MODE: ${GAME_MODE:-survival}
+  # auto = online (Steam + Mobile lobbies) when vendor/cluster_token_steam.txt exists,
+  # LAN/offline demo otherwise. See server/entrypoint.sh.
+  OFFLINE_CLUSTER: ${OFFLINE_CLUSTER:-auto}
+
+services:
+  server:
+    <<: *shard
+    profiles: [server]
+    environment:
+      <<: *shard-env
+      SHARD: Master
+
+  caves:
+    <<: *shard
+    profiles: [caves]
+    environment:
+      <<: *shard-env
+      SHARD: Caves
+
+  relay:
+    build:
+      context: .
+      dockerfile: relay/Dockerfile
+    image: dst-crossplay-relay
+    platform: linux/amd64
+    network_mode: host
+    restart: unless-stopped
+    # libwebsockets tries to allocate about 1 GB of fds and dies unless nofile is capped.
+    ulimits:
+      nofile: { soft: 1024, hard: 65536 }
+    environment:
+      DST_EOS_PRODUCT_ID: ${DST_EOS_PRODUCT_ID}
+      DST_EOS_SANDBOX_ID: ${DST_EOS_SANDBOX_ID}
+      DST_EOS_DEPLOYMENT_ID: ${DST_EOS_DEPLOYMENT_ID}
+      DST_EOS_CLIENT_ID: ${DST_EOS_CLIENT_ID}
+      DST_EOS_CLIENT_SECRET: ${DST_EOS_CLIENT_SECRET}
+      DST_EOS_RELAY_CONTROL: ${DST_EOS_RELAY_CONTROL:-AllowRelays}
+      HOME: /eos-cache
+    volumes:
+      - eos-cache:/eos-cache
+    command: ["0", "${BRIDGE_PORT:-11012}"]
+
+  # Second EOS identity for the Caves shard. A phone that joined over EOS changes shard
+  # over EOS too: it looks the target up in the Mobile row's secondaries and connects to
+  # this relay's ProductUserId, which forwards to bridge-caves.
+  relay-caves:
+    profiles: [caves]
+    image: dst-crossplay-relay
+    platform: linux/amd64
+    network_mode: host
+    restart: unless-stopped
+    ulimits:
+      nofile: { soft: 1024, hard: 65536 }
+    environment:
+      DST_EOS_PRODUCT_ID: ${DST_EOS_PRODUCT_ID}
+      DST_EOS_SANDBOX_ID: ${DST_EOS_SANDBOX_ID}
+      DST_EOS_DEPLOYMENT_ID: ${DST_EOS_DEPLOYMENT_ID}
+      DST_EOS_CLIENT_ID: ${DST_EOS_CLIENT_ID}
+      DST_EOS_CLIENT_SECRET: ${DST_EOS_CLIENT_SECRET}
+      DST_EOS_RELAY_CONTROL: ${DST_EOS_RELAY_CONTROL:-AllowRelays}
+      DST_EOS_PUID_FILE: /eos-cache-caves/adapter_puid.txt
+      DST_EOS_CACHE_DIR: /eos-cache-caves
+      HOME: /eos-cache-caves
+    volumes:
+      - eos-cache-caves:/eos-cache-caves
+    command: ["0", "${CAVES_BRIDGE_PORT:-11014}"]
+
+  bridge:
+    build:
+      context: ../..
+      dockerfile: deploy/crossplay-docker/gateway/Dockerfile
+    image: dst-crossplay-gateway
+    platform: linux/amd64
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [relay]
+    volumes:
+      - eos-cache:/eos-cache
+      - ./vendor:/vendor:ro
+      - ./logs:/logs
+    command:
+      - lan_bridge.py
+      - --listen-port=${BRIDGE_PORT:-11012}
+      - --server=${BRIDGE_SERVER:-127.0.0.1:11011}
+      - --template=/vendor/pong_mobile.hex
+      - --name=${SERVER_NAME:-DST Crossplay}
+      # Every datagram is written to this file. /dev/null keeps the disk quiet; point it
+      # at /logs/bridge.log while debugging (it also carries the 30-second RTT lines).
+      - --log=${BRIDGE_LOG:-/dev/null}
+      - --duration=31536000
+      - --rewrite-listing
+      - --geyser
+      - --netvars
+      - --server-password=${SERVER_PASSWORD:-}
+      - --eos-host=/eos-cache/adapter_puid.txt
+      # Going down a sinkhole: send the phone to the Caves bridge instead of the Caves shard.
+      - --migrate=${CAVES_PORT:-11013}=${CAVES_BRIDGE_PORT:-11014}
+      - --migrate-host=${PUBLIC_HOST:-}
+      # Phones from the Mobile Online list: the online move message, looked up in the row.
+      - --migrate-lobby=/eos-cache/mobile_row.json
+      - --migrate-shard=${CAVES_SHARD_ID:-2}
+
+  bridge-caves:
+    profiles: [caves]
+    image: dst-crossplay-gateway
+    platform: linux/amd64
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [bridge]
+    volumes:
+      - eos-cache:/eos-cache
+      - eos-cache-caves:/eos-cache-caves
+      - ./vendor:/vendor:ro
+      - ./logs:/logs
+    command:
+      - lan_bridge.py
+      - --listen-port=${CAVES_BRIDGE_PORT:-11014}
+      - --server=127.0.0.1:${CAVES_PORT:-11013}
+      - --template=/vendor/pong_mobile.hex
+      - --name=${SERVER_NAME:-DST Crossplay}
+      - --log=${CAVES_BRIDGE_LOG:-/dev/null}
+      - --duration=31536000
+      - --rewrite-listing
+      - --geyser
+      - --netvars
+      - --server-password=${SERVER_PASSWORD:-}
+      - --eos-host=/eos-cache-caves/adapter_puid.txt
+      # Climbing the stairs: back to the Master bridge. --unlisted keeps the Caves shard
+      # from showing up as a second server; it still answers the ping a phone sends
+      # right before it connects.
+      - --migrate=${SERVER_PORT:-11011}=${BRIDGE_PORT:-11012}
+      - --migrate-host=${PUBLIC_HOST:-}
+      - --migrate-lobby=/eos-cache/mobile_row.json
+      - --migrate-shard=1
+      - --unlisted
+
+  announcer:
+    profiles: [announcer]
+    image: dst-crossplay-gateway
+    platform: linux/amd64
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [bridge]
+    volumes:
+      - eos-cache:/eos-cache
+      - eos-cache-caves:/eos-cache-caves
+      - ./vendor:/vendor:ro
+    command:
+      - lobby_announce.py
+      - --region=${REGION:-ap-southeast-1}
+      - --name=${SERVER_NAME:-DST Crossplay}
+      - --row=64:64020301:${BRIDGE_PORT:-11012}:/vendor/cluster_token.txt:p
+      - --eos-host=/eos-cache/adapter_puid.txt
+      - --probe-host=127.0.0.1
+      - --max-players=${MAX_PLAYERS:-6}
+      - --mode=${GAME_MODE:-survival}
+      - --password
+      - --description=${SERVER_DESCRIPTION:-}
+      - --tags=${SERVER_TAGS:-}
+      # Where a phone that changes shard over EOS finds each shard (Master = 1). Without
+      # the caves profile the second relay never writes its id and only the Master is listed.
+      - --public-host=${PUBLIC_HOST:-0.0.0.0}
+      - --secondary=1:${BRIDGE_PORT:-11012}:/eos-cache/adapter_puid.txt
+      - --secondary=${CAVES_SHARD_ID:-2}:${CAVES_BRIDGE_PORT:-11014}:/eos-cache-caves/adapter_puid.txt
+      - --row-file=/eos-cache/mobile_row.json
+
+volumes:
+  eos-cache:
+  eos-cache-caves:
+  dst-data:

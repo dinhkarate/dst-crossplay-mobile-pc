@@ -1,0 +1,12 @@
+# Secrets and host-specific state: never commit.
+.env
+data/
+logs/
+*.log
+
+# Assets you provide (licensed, large, or account-bound).
+vendor/eos-sdk/
+vendor/dst-server/
+vendor/pong_mobile.hex
+vendor/cluster_token.txt
+vendor/cluster_token_steam.txt
