@@ -1,0 +1,10 @@
+name = "Netvar Dump"
+description = "Dedicated server only. Records every netvar each prefab registers (name, type, name hash) and writes them to unsafedata/netvar_dump.txt. Changes nothing on the wire."
+author = "DST Mobile Compat Team"
+version = "0.1.0"
+forumthread = ""
+api_version = 10
+dst_compatible = true
+all_clients_require_mod = false
+client_only_mod = false
+server_only_mod = true
