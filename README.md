@@ -11,6 +11,8 @@ A stock, non-rooted phone joins a patched PC dedicated server straight from the 
 list, and PC players join the same world the usual way. Seeing each other, chat, fighting bosses, dying and
 being revived all work, and phones go down into the Caves and back up like PC players.
 
+<img width="1095" height="1280" alt="A PC and a phone in the same DST world" src="https://github.com/user-attachments/assets/24a4b2e5-3186-40e8-b816-f71fce35ecef" />
+
 **English** · [Tiếng Việt](#tiếng-việt) · [中文](#中文)
 
 ## Try it now (no install)
