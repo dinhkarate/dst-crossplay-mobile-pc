@@ -42,6 +42,19 @@ flowchart LR
 
 Everything runs with Docker on a single Linux x86_64 machine.
 
+## Inspiration
+
+Two community projects from other games showed this was possible:
+
+- **[Geyser](https://geysermc.org)** lets Minecraft Bedrock players (phones, consoles) join Minecraft Java
+  servers by translating between the two protocols on the fly. The bridge here follows the same model, and its
+  translator is named after it ([`proxy-bridge/geyser/`](proxy-bridge/geyser/)). The server patches play the
+  part of Geyser's companion, Floodgate: they let the server accept players who have no PC account.
+- **[SMAPI](https://smapi.io)**, the Stardew Valley modding API, showed how far a community-built layer can
+  take a game whose developers never built it to be opened up.
+
+If Minecraft and Stardew Valley players got there, there's no reason Don't Starve Together can't.
+
 ## Host your own server
 
 👉 **[deploy/crossplay-docker/](deploy/crossplay-docker/)** — one folder, one `.env`, one Docker command.
@@ -96,6 +109,9 @@ PC vào cùng thế giới đó. Thấy nhau, chat, đánh boss, chết và hồ
 - **Tự dựng server:** xem [`deploy/crossplay-docker/`](deploy/crossplay-docker/) — một thư mục, một file
   `.env`, một lệnh Docker. Bạn phải tự cung cấp vài thứ có bản quyền/gắn tài khoản (EOS SDK, credential EOS,
   cluster token, bản dedicated server); repo không chứa file, asset, script, credential hay token nào của game.
+- **Cảm hứng:** [Geyser](https://geysermc.org) cho người chơi Minecraft Bedrock vào server Minecraft Java, và
+  [SMAPI](https://smapi.io) mở Stardew Valley cho cộng đồng mod. Minecraft và Stardew Valley làm được thì DST
+  cũng làm được.
 
 Dự án phi thương mại do fan làm, không liên kết với Klei hay Playdigious. Giấy phép [AGPL-3.0](LICENSE).
 
@@ -108,6 +124,8 @@ Dự án phi thương mại do fan làm, không liên kết với Klei hay Playd
 - **立即体验：** 手机打开 DST → Browse Games → 搜索 `DST Crossplay PC Mobile`，输入密码（见 [Discord](https://discord.gg/DFnPkmHwTE) 的 `#how-to-join`）。
 - **自建服务器：** 见 [`deploy/crossplay-docker/`](deploy/crossplay-docker/)。仓库不包含任何游戏文件、资源、脚本、
   凭据或令牌；EOS SDK、EOS 凭据、cluster token 和专用服务器需自行准备。
+- **灵感来源：** [Geyser](https://geysermc.org) 让 Minecraft 基岩版玩家加入 Java 版服务器，
+  [SMAPI](https://smapi.io) 为星露谷物语打开了社区模组的大门。Minecraft 和星露谷物语能做到，饥荒联机版也能。
 
 非商业粉丝项目，与 Klei、Playdigious 无关。许可证 [AGPL-3.0](LICENSE)。
 
