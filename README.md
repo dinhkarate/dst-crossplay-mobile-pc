@@ -1,6 +1,6 @@
 # DST Crossplay: Mobile ↔ PC
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/5pU9bSN4T6)
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?logo=discord&logoColor=white)](https://discord.gg/DFnPkmHwTE)
 ![Status](https://img.shields.io/badge/status-playable-brightgreen)
 ![Platforms](https://img.shields.io/badge/platforms-PC%20%7C%20Android-blue)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-orange.svg)](LICENSE)
@@ -17,7 +17,7 @@ being revived all work, and phones go down into the Caves and back up like PC pl
 
 1. Open DST on your Android phone → **Browse Games**
 2. Search `DST Crossplay PC Mobile`, pick a server
-3. Enter the password announced in `#how-to-join` on [Discord](https://discord.gg/5pU9bSN4T6)
+3. Enter the password announced in `#how-to-join` on [Discord](https://discord.gg/DFnPkmHwTE)
 
 Nothing is installed or modified on the phone.
 
@@ -90,7 +90,7 @@ giới. Điện thoại **không root, không mod APK**, vào thẳng từ mục
 PC vào cùng thế giới đó. Thấy nhau, chat, đánh boss, chết và hồi sinh, xuống Caves rồi lên lại đều chạy.
 
 - **Thử ngay:** mở DST trên điện thoại → Browse Games → tìm `DST Crossplay PC Mobile`, nhập mật khẩu (công bố
-  ở `#how-to-join` trên [Discord](https://discord.gg/5pU9bSN4T6)).
+  ở `#how-to-join` trên [Discord](https://discord.gg/DFnPkmHwTE)).
 - **Tự dựng server:** xem [`deploy/crossplay-docker/`](deploy/crossplay-docker/) — một thư mục, một file
   `.env`, một lệnh Docker. Bạn phải tự cung cấp vài thứ có bản quyền/gắn tài khoản (EOS SDK, credential EOS,
   cluster token, bản dedicated server); repo không chứa file, asset, script, credential hay token nào của game.
@@ -103,7 +103,7 @@ Dự án phi thương mại do fan làm, không liên kết với Klei hay Playd
 无需 root、无需修改 APK，手机直接从游戏内 **Browse Games** 列表加入；PC 玩家照常加入同一世界。互相可见、聊天、
 打 Boss、死亡与复活、进出洞穴均可用。
 
-- **立即体验：** 手机打开 DST → Browse Games → 搜索 `DST Crossplay PC Mobile`，输入密码（见 [Discord](https://discord.gg/5pU9bSN4T6) 的 `#how-to-join`）。
+- **立即体验：** 手机打开 DST → Browse Games → 搜索 `DST Crossplay PC Mobile`，输入密码（见 [Discord](https://discord.gg/DFnPkmHwTE) 的 `#how-to-join`）。
 - **自建服务器：** 见 [`deploy/crossplay-docker/`](deploy/crossplay-docker/)。仓库不包含任何游戏文件、资源、脚本、
   凭据或令牌；EOS SDK、EOS 凭据、cluster token 和专用服务器需自行准备。
 
